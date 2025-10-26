@@ -16,29 +16,43 @@ interface Failure {
   val message: String?
   val cause: Cause?
 
-  fun causes(max: Int = 999): List<Cause> =
+  /**
+   * Returns the list of causes ([Cause] instances) until the [cause] of a [Failure] is null. The
+   * causal chain also stops at [ThrowableCause] because a [Throwable] has its own stack trace.
+   *
+   * The [max] parameter has the main purpose of making the function call stack-safe in case of a
+   * self reference.
+   */
+  fun causalChain(max: Int = 999): List<Cause> =
     generateSequence(this.cause) { cause ->
         when (cause) {
           is FailureCause -> cause.failure.cause
-          is ThrowableCause -> cause.throwable.cause?.let { throwable -> ThrowableCause(throwable) }
+          is ThrowableCause -> null
         }
       }
       .take(max)
       .toList()
 
-  fun rootCause(): Cause? = causes().lastOrNull()
+  /**
+   * Returns the last element of the [causalChain] (or null). Note that if the [Failure] is caused
+   * by a [ThrowableCause], then this method will return that [ThrowableCause] – which has its own
+   * stack trace – and *not* the deepest [Throwable] down the chain.
+   */
+  fun rootCause(): Cause? = causalChain().lastOrNull()
+
+  fun toSimpleString(): String = "${javaClass.simpleName}: $message"
 
   fun print(max: Int = 999): String {
     val simpleStrings: List<String> =
       listOf(toSimpleString()) +
-        causes(max).map { cause ->
+        causalChain(max).map { cause ->
           when (cause) {
             is FailureCause -> cause.failure.toSimpleString()
-            is ThrowableCause -> cause.throwable.toSimpleString()
+            is ThrowableCause -> cause.throwable.stackTraceToString()
           }
         }
 
-    return simpleStrings.joinToString("\ncaused by ")
+    return simpleStrings.joinToString("\nCaused by: ")
   }
 }
 
@@ -53,24 +67,22 @@ data class ThrowableCause(val throwable: Throwable) : Cause
 
 // extensions
 
-fun Failure.toSimpleString(): String = "${javaClass.simpleName}: $message"
+fun <F1 : Failure, F2 : Failure> F1.causeFailure(
+  message: String,
+  transformation: (String, Cause) -> F2,
+): F2 = transformation(message, FailureCause(this))
 
-fun Throwable.toSimpleString(): String = "${javaClass.simpleName}: $message"
-
-fun Failure.causeFailure(message: String, transformation: (String, Cause) -> Failure): Failure =
-  transformation(message, FailureCause(this))
-
-fun Throwable.causeFailure(message: String, transformation: (String, Cause) -> Failure): Failure =
+fun <F : Failure> Throwable.causeFailure(message: String, transformation: (String, Cause) -> F): F =
   transformation(message, ThrowableCause(this))
 
-fun <R> Either<Failure, R>.causeFailure(
+fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
   message: String,
-  transformation: (String, Cause) -> Failure,
-): Either<Failure, R> = mapLeft { failure -> failure.causeFailure(message, transformation) }
+  transformation: (String, Cause) -> F2,
+): Either<F2, R> = mapLeft { failure -> failure.causeFailure(message, transformation) }
 
-suspend fun <R> catchAndCauseFailure(
+suspend fun <F : Failure, R> catchAndCauseFailure(
   message: String,
-  transformation: (String, Cause) -> Failure,
+  transformation: (String, Cause) -> F,
   f: suspend () -> R,
-): Either<Failure, R> =
+): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }

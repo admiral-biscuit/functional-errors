@@ -6,6 +6,7 @@ import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 
 private data class SomeFailure(override val message: String, override val cause: Cause? = null) :
@@ -22,22 +23,24 @@ class FailureTest :
       val failure1 = SomeFailure("I am hungry", ThrowableCause(throwable2))
       val failure2 = OtherFailure("I am dying", FailureCause(failure1))
 
-      test("causes") {
-        failure2.causes() shouldBe
-          listOf(FailureCause(failure1), ThrowableCause(throwable2), ThrowableCause(throwable1))
+      test("causal chain") {
+        failure2.causalChain() shouldBe listOf(FailureCause(failure1), ThrowableCause(throwable2))
       }
 
-      test("root cause") { failure2.rootCause() shouldBe ThrowableCause(throwable1) }
+      test("root cause") { failure2.rootCause() shouldBe ThrowableCause(throwable2) }
 
       test("print") {
-        failure2.print() shouldBe
+        val print = failure2.print()
+
+        print shouldContain
           """
           OtherFailure: I am dying
-          caused by SomeFailure: I am hungry
-          caused by IllegalStateException: there is no food
-          caused by Throwable: Biscuit ate everything
+          Caused by: SomeFailure: I am hungry
+          Caused by: java.lang.IllegalStateException: there is no food
         """
             .trimIndent()
+
+        print shouldContain "Caused by: java.lang.Throwable: Biscuit ate everything"
       }
     }
 
