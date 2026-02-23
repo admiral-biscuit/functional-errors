@@ -5,8 +5,8 @@ import arrow.core.right
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 
 private data class SomeFailure(override val message: String, override val cause: Cause? = null) :
@@ -29,18 +29,38 @@ class FailureTest :
 
       test("root cause") { failure2.rootCause() shouldBe ThrowableCause(throwable2) }
 
-      test("print") {
-        val print = failure2.print()
+      test("toPrettyString") {
+        val prettyStringLines = failure2.toPrettyString().split("\n")
 
-        print shouldContain
+        prettyStringLines shouldContainInOrder
+          listOf(
+            "OtherFailure: I am dying",
+            "Caused by: SomeFailure: I am hungry",
+            "Caused by: java.lang.IllegalStateException: there is no food",
+            "Caused by: java.lang.Throwable: Biscuit ate everything",
+          )
+      }
+
+      test("toPrettyString with non-default arguments") {
+        val failureToString = { failure: Failure ->
+          "FAILURE ${failure.javaClass.simpleName}: ${failure.message}"
+        }
+
+        val throwableToString = { throwable: Throwable ->
+          "THROWABLE ${throwable.javaClass.simpleName}: ${throwable.message}"
+        }
+
+        val joinStrings = { strings: List<String> -> strings.joinToString(separator = "\n-> ") }
+
+        val prettyString = failure2.toPrettyString(failureToString, throwableToString, joinStrings)
+
+        prettyString shouldBe
           """
-          OtherFailure: I am dying
-          Caused by: SomeFailure: I am hungry
-          Caused by: java.lang.IllegalStateException: there is no food
-        """
+          FAILURE OtherFailure: I am dying
+          -> FAILURE SomeFailure: I am hungry
+          -> THROWABLE IllegalStateException: there is no food
+          """
             .trimIndent()
-
-        print shouldContain "Caused by: java.lang.Throwable: Biscuit ate everything"
       }
     }
 

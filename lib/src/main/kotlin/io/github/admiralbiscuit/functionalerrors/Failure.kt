@@ -2,6 +2,8 @@ package io.github.admiralbiscuit.functionalerrors
 
 import arrow.core.Either
 
+private const val MAX_CHAIN_LENGTH = 999
+
 /**
  * The [Failure] class is meant to be used together with Arrow's [Either] in order to model
  * non-exceptional errors.
@@ -23,7 +25,7 @@ interface Failure {
    * The [max] parameter has the main purpose of making the function call stack-safe in case of a
    * self reference.
    */
-  fun causalChain(max: Int = 999): List<Cause> =
+  fun causalChain(max: Int = MAX_CHAIN_LENGTH): List<Cause> =
     generateSequence(this.cause) { cause ->
         when (cause) {
           is FailureCause -> cause.failure.cause
@@ -42,17 +44,27 @@ interface Failure {
 
   fun toSimpleString(): String = "${javaClass.simpleName}: $message"
 
-  fun print(max: Int = 999): String {
-    val simpleStrings: List<String> =
-      listOf(toSimpleString()) +
+  /**
+   * Returns a string representation of the whole [causalChain], including the [Failure] at the top.
+   * The formatting can be customized by optionally providing functions to the arguments
+   * [failureToString], [throwableToString], and [joinStrings].
+   */
+  fun toPrettyString(
+    failureToString: (Failure) -> String = { failure -> failure.toSimpleString() },
+    throwableToString: (Throwable) -> String = { throwable -> throwable.stackTraceToString() },
+    joinStrings: (List<String>) -> String = { strings -> strings.joinToString("\nCaused by: ") },
+    max: Int = MAX_CHAIN_LENGTH,
+  ): String {
+    val strings: List<String> =
+      listOf(failureToString(this)) +
         causalChain(max).map { cause ->
           when (cause) {
-            is FailureCause -> cause.failure.toSimpleString()
-            is ThrowableCause -> cause.throwable.stackTraceToString()
+            is FailureCause -> failureToString(cause.failure)
+            is ThrowableCause -> throwableToString(cause.throwable)
           }
         }
 
-    return simpleStrings.joinToString("\nCaused by: ")
+    return joinStrings(strings)
   }
 }
 
@@ -61,11 +73,11 @@ interface Failure {
 /** A [Failure] can either be caused by another [Failure] or by a [Throwable]. */
 sealed interface Cause
 
-data class FailureCause(val failure: Failure) : Cause
+@JvmInline value class FailureCause(val failure: Failure) : Cause
 
-data class ThrowableCause(val throwable: Throwable) : Cause
+@JvmInline value class ThrowableCause(val throwable: Throwable) : Cause
 
-// extensions
+// extension functions
 
 fun <F1 : Failure, F2 : Failure> F1.causeFailure(
   message: String,
