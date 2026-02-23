@@ -31,6 +31,7 @@ publishing {
 
       pom {
         name = "functional-errors"
+        artifactId = "functional-errors"
         description = "Functional error handling utilities"
         url = "https://github.com/admiral-biscuit/functional-errors"
       }
