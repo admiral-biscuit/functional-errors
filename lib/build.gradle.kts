@@ -6,11 +6,14 @@ plugins {
   `maven-publish`
 }
 
-group = "io.github.admiralbiscuit"
+group = "io.github.admiral-biscuit"
 
 version = "0.0.1"
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
+java {
+  withSourcesJar()
+  toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+}
 
 repositories { mavenCentral() }
 
@@ -28,6 +31,10 @@ publishing {
   publications {
     create<MavenPublication>("mavenJava") {
       from(components["java"])
+
+      groupId = project.group.toString()
+      artifactId = "functional-errors"
+      version = project.version.toString()
 
       pom {
         name = "functional-errors"
