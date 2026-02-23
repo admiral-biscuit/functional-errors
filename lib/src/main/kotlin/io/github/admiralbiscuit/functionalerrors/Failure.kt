@@ -19,28 +19,38 @@ interface Failure {
   val cause: Cause?
 
   /**
-   * Returns the list of causes ([Cause] instances) until the [cause] of a [Failure] is null. The
-   * causal chain also stops at [ThrowableCause] because a [Throwable] has its own stack trace.
+   * Returns the list of causes ([Cause] instances) until the [cause] of a [Failure] is null. By
+   * default, the causal chain also stops at the first [ThrowableCause] because a [Throwable] has
+   * its own stack trace. If desired, this behavior can be changed by passing `false` to
+   * [stopAtFirstThrowable] – the chain will then continue to the root [Throwable].
    *
    * The [max] parameter has the main purpose of making the function call stack-safe in case of a
    * self reference.
    */
-  fun causalChain(max: Int = MAX_CHAIN_LENGTH): List<Cause> =
+  fun causalChain(stopAtFirstThrowable: Boolean = true, max: Int = MAX_CHAIN_LENGTH): List<Cause> =
     generateSequence(this.cause) { cause ->
         when (cause) {
           is FailureCause -> cause.failure.cause
-          is ThrowableCause -> null
+          is ThrowableCause ->
+            if (stopAtFirstThrowable) {
+              null
+            } else {
+              cause.throwable.cause?.let { ThrowableCause(it) }
+            }
         }
       }
       .take(max)
       .toList()
 
   /**
-   * Returns the last element of the [causalChain] (or null). Note that if the [Failure] is caused
-   * by a [ThrowableCause], then this method will return that [ThrowableCause] – which has its own
-   * stack trace – and *not* the deepest [Throwable] down the chain.
+   * Returns the last element of the [causalChain] (or null). If the given [Failure] is at some
+   * point caused by a [ThrowableCause], then the return value of this method depends on what is
+   * passed to [stopAtFirstThrowable]:
+   * - If `true` (default), that [ThrowableCause] will be returned.
+   * - If `false`, the root throwable will be returned as a [ThrowableCause].
    */
-  fun rootCause(): Cause? = causalChain().lastOrNull()
+  fun rootCause(stopAtFirstThrowable: Boolean = true): Cause? =
+    causalChain(stopAtFirstThrowable).lastOrNull()
 
   fun toSimpleString(): String = "${javaClass.simpleName}: $message"
 
@@ -53,11 +63,12 @@ interface Failure {
     failureToString: (Failure) -> String = { failure -> failure.toSimpleString() },
     throwableToString: (Throwable) -> String = { throwable -> throwable.stackTraceToString() },
     joinStrings: (List<String>) -> String = { strings -> strings.joinToString("\nCaused by: ") },
+    stopAtFirstThrowable: Boolean = true,
     max: Int = MAX_CHAIN_LENGTH,
   ): String {
     val strings: List<String> =
       listOf(failureToString(this)) +
-        causalChain(max).map { cause ->
+        causalChain(stopAtFirstThrowable, max).map { cause ->
           when (cause) {
             is FailureCause -> failureToString(cause.failure)
             is ThrowableCause -> throwableToString(cause.throwable)

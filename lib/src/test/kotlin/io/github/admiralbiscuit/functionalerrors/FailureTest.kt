@@ -25,9 +25,14 @@ class FailureTest :
 
       test("causal chain") {
         failure2.causalChain() shouldBe listOf(FailureCause(failure1), ThrowableCause(throwable2))
+        failure2.causalChain(stopAtFirstThrowable = false) shouldBe
+          listOf(FailureCause(failure1), ThrowableCause(throwable2), ThrowableCause(throwable1))
       }
 
-      test("root cause") { failure2.rootCause() shouldBe ThrowableCause(throwable2) }
+      test("root cause") {
+        failure2.rootCause() shouldBe ThrowableCause(throwable2)
+        failure2.rootCause(stopAtFirstThrowable = false) shouldBe ThrowableCause(throwable1)
+      }
 
       test("toPrettyString") {
         val prettyStringLines = failure2.toPrettyString().split("\n")
@@ -52,13 +57,20 @@ class FailureTest :
 
         val joinStrings = { strings: List<String> -> strings.joinToString(separator = "\n-> ") }
 
-        val prettyString = failure2.toPrettyString(failureToString, throwableToString, joinStrings)
+        val prettyString =
+          failure2.toPrettyString(
+            failureToString = failureToString,
+            throwableToString = throwableToString,
+            joinStrings = joinStrings,
+            stopAtFirstThrowable = false,
+          )
 
         prettyString shouldBe
           """
           FAILURE OtherFailure: I am dying
           -> FAILURE SomeFailure: I am hungry
           -> THROWABLE IllegalStateException: there is no food
+          -> THROWABLE Throwable: Biscuit ate everything
           """
             .trimIndent()
       }
