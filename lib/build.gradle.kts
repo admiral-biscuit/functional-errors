@@ -1,7 +1,14 @@
+import java.net.URI
+
 plugins {
   kotlin("jvm") version "2.1.0"
   `java-library`
+  `maven-publish`
 }
+
+group = "io.github.admiralbiscuit"
+
+version = "0.0.1"
 
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
@@ -16,3 +23,28 @@ dependencies {
 }
 
 tasks.named<Test>("test") { useJUnitPlatform() }
+
+publishing {
+  publications {
+    create<MavenPublication>("mavenJava") {
+      from(components["java"])
+
+      pom {
+        name = "functional-errors"
+        description = "Functional error handling utilities"
+        url = "https://github.com/admiral-biscuit/functional-errors"
+      }
+    }
+  }
+
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = URI("https://maven.pkg.github.com/admiral-biscuit/functional-errors")
+      credentials {
+        username = System.getenv("GITHUB_ACTOR")
+        password = System.getenv("GITHUB_TOKEN")
+      }
+    }
+  }
+}
