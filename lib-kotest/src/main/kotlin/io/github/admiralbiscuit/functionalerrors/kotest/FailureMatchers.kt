@@ -9,6 +9,7 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
 
+// region Matcher
 private fun haveMessage(message: String) =
   Matcher<Failure> { failure ->
     MatcherResult(
@@ -45,6 +46,9 @@ private fun haveThrowableCause(throwable: Throwable) =
     )
   }
 
+// endregion
+
+// region assertions
 infix fun Failure.shouldHaveMessage(message: String): Failure = apply {
   should(haveMessage(message))
 }
@@ -80,3 +84,4 @@ fun Failure.shouldHaveThrowableCause(): ThrowableCause {
   if (cause !is ThrowableCause) error("Expected cause to be a ThrowableCause but was $cause")
   return cause
 }
+// endregion

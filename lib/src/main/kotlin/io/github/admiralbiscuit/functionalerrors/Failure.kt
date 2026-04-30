@@ -3,6 +3,7 @@ package io.github.admiralbiscuit.functionalerrors
 
 import arrow.core.Either
 
+// region Failure
 private const val MAX_CHAIN_LENGTH = 999
 
 /**
@@ -83,8 +84,9 @@ interface Failure {
   }
 }
 
-// Cause
+// endregion
 
+// region Cause
 /** The cause of a [Failure]: either another [Failure] or a [Throwable]. */
 sealed interface Cause
 
@@ -94,8 +96,9 @@ sealed interface Cause
 /** Wraps a [Throwable] as the cause of a [Failure], bridging exception-based code. */
 @JvmInline value class ThrowableCause(val throwable: Throwable) : Cause
 
-// extension functions
+// endregion
 
+// region extension functions
 /** Wraps this [Failure] as a [FailureCause]. Useful when constructing a new [Failure] manually. */
 fun Failure.toCause(): FailureCause = FailureCause(this)
 
@@ -144,3 +147,4 @@ suspend fun <F : Failure, R> catchAndCauseFailure(
   f: suspend () -> R,
 ): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
+// endregion
