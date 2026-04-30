@@ -9,14 +9,14 @@ private const val MAX_CHAIN_LENGTH = 999
  * The [Failure] class is meant to be used together with Arrow's [Either] in order to model
  * non-exceptional errors.
  *
- * A failure has to implement a [message] field (which may be null) and a [cause] field (which can
- * be a [FailureCause] or a [ThrowableCause] or null).
+ * A failure has to implement a [message] field and a [cause] field (which can be a [FailureCause]
+ * or a [ThrowableCause] or null).
  *
  * The [Failure] interface is equipped with some convenience methods that can be used to emulate a
  * stack trace.
  */
 interface Failure {
-  val message: String?
+  val message: String
   val cause: Cause?
 
   /**
