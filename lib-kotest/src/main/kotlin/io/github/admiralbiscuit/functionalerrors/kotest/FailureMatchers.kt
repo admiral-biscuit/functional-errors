@@ -9,7 +9,7 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
 
-fun haveMessage(message: String) =
+private fun haveMessage(message: String) =
   Matcher<Failure> { failure ->
     MatcherResult(
       failure.message == message,
@@ -18,7 +18,7 @@ fun haveMessage(message: String) =
     )
   }
 
-fun haveMessageContaining(substring: String) =
+private fun haveMessageContaining(substring: String) =
   Matcher<Failure> { failure ->
     MatcherResult(
       failure.message.contains(substring),
@@ -27,7 +27,7 @@ fun haveMessageContaining(substring: String) =
     )
   }
 
-fun haveFailureCause(failure: Failure) =
+private fun haveFailureCause(failure: Failure) =
   Matcher<Failure> { actual ->
     MatcherResult(
       actual.cause == FailureCause(failure),
@@ -36,7 +36,7 @@ fun haveFailureCause(failure: Failure) =
     )
   }
 
-fun haveThrowableCause(throwable: Throwable) =
+private fun haveThrowableCause(throwable: Throwable) =
   Matcher<Failure> { actual ->
     MatcherResult(
       actual.cause == ThrowableCause(throwable),
@@ -45,30 +45,36 @@ fun haveThrowableCause(throwable: Throwable) =
     )
   }
 
-fun Failure.shouldHaveMessage(message: String): Failure = apply { should(haveMessage(message)) }
+infix fun Failure.shouldHaveMessage(message: String): Failure = apply {
+  should(haveMessage(message))
+}
 
 fun Failure.shouldNotHaveMessage(message: String): Failure = apply {
   shouldNot(haveMessage(message))
 }
 
-fun Failure.shouldHaveMessageContaining(substring: String): Failure = apply {
+infix fun Failure.shouldHaveMessageContaining(substring: String): Failure = apply {
   should(haveMessageContaining(substring))
 }
 
-fun Failure.shouldHaveFailureCause(failure: Failure): Failure = apply {
+/** Asserts that the direct cause is a [FailureCause] wrapping [failure]. */
+infix fun Failure.shouldHaveFailureCause(failure: Failure): Failure = apply {
   should(haveFailureCause(failure))
 }
 
-fun Failure.shouldHaveThrowableCause(throwable: Throwable): Failure = apply {
+/** Asserts that the direct cause is a [ThrowableCause] wrapping [throwable]. */
+infix fun Failure.shouldHaveThrowableCause(throwable: Throwable): Failure = apply {
   should(haveThrowableCause(throwable))
 }
 
+/** Asserts that the direct cause is a [FailureCause] and returns it for further inspection. */
 fun Failure.shouldHaveFailureCause(): FailureCause {
   val cause = this.cause
   if (cause !is FailureCause) error("Expected cause to be a FailureCause but was $cause")
   return cause
 }
 
+/** Asserts that the direct cause is a [ThrowableCause] and returns it for further inspection. */
 fun Failure.shouldHaveThrowableCause(): ThrowableCause {
   val cause = this.cause
   if (cause !is ThrowableCause) error("Expected cause to be a ThrowableCause but was $cause")

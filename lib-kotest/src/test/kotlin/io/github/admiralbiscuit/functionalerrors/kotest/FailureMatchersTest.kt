@@ -23,10 +23,10 @@ class FailureMatchersTest :
     context("shouldHaveMessage") {
       val failure = SomeFailure("something went wrong")
 
-      test("passes for matching message") { failure.shouldHaveMessage("something went wrong") }
+      test("passes for matching message") { failure shouldHaveMessage "something went wrong" }
 
       test("fails for non-matching message") {
-        val error = shouldThrow<AssertionError> { failure.shouldHaveMessage("something else") }
+        val error = shouldThrow<AssertionError> { failure shouldHaveMessage "something else" }
         error.message shouldBe
           "Expected message \"something else\" but was \"something went wrong\""
       }
@@ -40,32 +40,32 @@ class FailureMatchersTest :
       val failure = SomeFailure("something went wrong")
 
       test("passes when message contains substring") {
-        failure.shouldHaveMessageContaining("went wrong")
+        failure shouldHaveMessageContaining "went wrong"
       }
 
       test("fails when message does not contain substring") {
-        shouldThrow<AssertionError> { failure.shouldHaveMessageContaining("all good") }
+        shouldThrow<AssertionError> { failure shouldHaveMessageContaining "all good" }
       }
     }
 
     context("shouldHaveFailureCause(failure)") {
       val failure = OtherFailure("top failure", FailureCause(cause))
 
-      test("passes for matching cause") { failure.shouldHaveFailureCause(cause) }
+      test("passes for matching cause") { failure shouldHaveFailureCause cause }
 
       test("fails for non-matching cause") {
-        shouldThrow<AssertionError> { failure.shouldHaveFailureCause(OtherFailure("wrong cause")) }
+        shouldThrow<AssertionError> { failure shouldHaveFailureCause OtherFailure("wrong cause") }
       }
     }
 
     context("shouldHaveThrowableCause(throwable)") {
       val failure = SomeFailure("top failure", ThrowableCause(throwable))
 
-      test("passes for matching cause") { failure.shouldHaveThrowableCause(throwable) }
+      test("passes for matching cause") { failure shouldHaveThrowableCause throwable }
 
       test("fails for non-matching cause") {
         shouldThrow<AssertionError> {
-          failure.shouldHaveThrowableCause(Throwable("wrong throwable"))
+          failure shouldHaveThrowableCause Throwable("wrong throwable")
         }
       }
     }

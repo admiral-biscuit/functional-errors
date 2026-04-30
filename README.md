@@ -120,10 +120,14 @@ matchers return the receiver (or the extracted cause), so they can be chained:
 ```kotlin
 val failure: ServiceFailure = TODO()
 
-// assert on the failure itself and chain
+// dot-chaining style
 failure
     .shouldHaveMessage("Could not load user profile")
     .shouldHaveFailureCause(databaseFailure)
+
+// infix style
+failure shouldHaveMessage "Could not load user profile"
+failure shouldHaveFailureCause databaseFailure
 
 // extract the cause for further assertions
 failure
