@@ -112,6 +112,26 @@ Caused by: java.sql.SQLException: Connection reset
 For programmatic inspection, `causalChain()` returns the list of `Cause` entries and `rootCause()`
 returns the last one.
 
+## Testing
+
+The `functional-errors-kotest` library provides Kotest matchers for asserting on failures. The
+matchers return the receiver (or the extracted cause), so they can be chained:
+
+```kotlin
+val failure: ServiceFailure = TODO()
+
+// assert on the failure itself and chain
+failure
+    .shouldHaveMessage("Could not load user profile")
+    .shouldHaveFailureCause(databaseFailure)
+
+// extract the cause for further assertions
+failure
+    .shouldHaveThrowableCause()
+    .throwable
+    .message shouldBe "Connection reset"
+```
+
 ## Requirements
 
 - Kotlin 2.x
