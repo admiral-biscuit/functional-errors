@@ -1,13 +1,5 @@
 import java.net.URI
 
-plugins {
-  `maven-publish`
-}
-
-group = "io.github.admiral-biscuit"
-
-version = "0.0.1"
-
 dependencies {
   api("io.arrow-kt:arrow-core:2.0.0")
   val kotestVersion: String by rootProject.extra

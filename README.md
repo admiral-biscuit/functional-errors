@@ -19,7 +19,15 @@ This library provides the building blocks to do that cleanly.
 
 ```kotlin
 dependencies {
-    implementation("io.github.admiral-biscuit:functional-errors:0.0.1")
+    implementation("io.github.admiral-biscuit:functional-errors:0.1.0")
+}
+```
+
+For Kotest assertion support, also add the companion library to your test dependencies:
+
+```kotlin
+dependencies {
+    testImplementation("io.github.admiral-biscuit:functional-errors-kotest:0.1.0")
 }
 ```
 
@@ -109,3 +117,5 @@ returns the last one.
 - Kotlin 2.x
 - Arrow 2.x
 - Java 17+
+
+`functional-errors-kotest` additionally requires Kotest 5.x.

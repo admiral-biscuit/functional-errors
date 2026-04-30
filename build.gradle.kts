@@ -12,6 +12,10 @@ subprojects {
   apply(plugin = "org.jetbrains.kotlin.jvm")
   apply(plugin = "java-library")
   apply(plugin = "com.diffplug.spotless")
+  apply(plugin = "maven-publish")
+
+  group = "io.github.admiral-biscuit"
+  version = "0.1.0"
 
   repositories { mavenCentral() }
 
