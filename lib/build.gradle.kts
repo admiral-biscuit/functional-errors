@@ -1,9 +1,6 @@
 import java.net.URI
 
 plugins {
-  kotlin("jvm") version "2.1.0"
-  id("com.diffplug.spotless") version "7.0.2"
-  `java-library`
   `maven-publish`
 }
 
@@ -11,28 +8,12 @@ group = "io.github.admiral-biscuit"
 
 version = "0.0.1"
 
-java {
-  withSourcesJar()
-  toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
-}
-
-repositories { mavenCentral() }
-
 dependencies {
   api("io.arrow-kt:arrow-core:2.0.0")
-  val kotestVersion = "5.9.1"
+  val kotestVersion: String by rootProject.extra
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
   testImplementation("io.kotest.extensions:kotest-assertions-arrow:2.0.0")
-}
-
-tasks.named<Test>("test") { useJUnitPlatform() }
-
-spotless {
-  kotlin {
-    licenseHeader("// SPDX-License-Identifier: MIT-0")
-    ktfmt().googleStyle()
-  }
 }
 
 publishing {
