@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT-0
 package io.github.admiralbiscuit.functionalerrors
 
 import arrow.core.left

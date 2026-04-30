@@ -2,6 +2,7 @@ import java.net.URI
 
 plugins {
   kotlin("jvm") version "2.1.0"
+  id("com.diffplug.spotless") version "7.0.2"
   `java-library`
   `maven-publish`
 }
@@ -26,6 +27,8 @@ dependencies {
 }
 
 tasks.named<Test>("test") { useJUnitPlatform() }
+
+spotless { kotlin { licenseHeader("// SPDX-License-Identifier: MIT-0") } }
 
 publishing {
   publications {
