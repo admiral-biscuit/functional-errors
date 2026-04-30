@@ -91,6 +91,10 @@ sealed interface Cause
 
 // extension functions
 
+fun Failure.toCause(): FailureCause = FailureCause(this)
+
+fun Throwable.toCause(): ThrowableCause = ThrowableCause(this)
+
 fun <F1 : Failure, F2 : Failure> F1.causeFailure(
   message: String,
   transformation: (String, Cause) -> F2,

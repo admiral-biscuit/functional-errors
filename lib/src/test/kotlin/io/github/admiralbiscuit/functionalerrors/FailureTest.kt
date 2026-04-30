@@ -107,4 +107,12 @@ class FailureTest :
         failure.cause.shouldBeInstanceOf<ThrowableCause>().throwable.message shouldBe "Oh no!"
       }
     }
+
+    test("toCause") {
+      val throwable = Throwable("Hi!")
+      throwable.toCause() shouldBe ThrowableCause(throwable)
+
+      val failure = SomeFailure("Hi!")
+      failure.toCause() shouldBe FailureCause(failure)
+    }
   })
