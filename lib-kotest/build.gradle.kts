@@ -6,14 +6,10 @@ dependencies {
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
 }
 
-publishing {
-  publications {
-    create<MavenPublication>("mavenJava") {
-      from(components["java"])
-
-      groupId = project.group.toString()
-      artifactId = "functional-errors-kotest"
-      version = project.version.toString()
-    }
+mavenPublishing {
+  coordinates(artifactId = "functional-errors-kotest")
+  pom {
+    name = "functional-errors-kotest"
+    description = "Kotest matchers for the functional-errors library."
   }
 }
