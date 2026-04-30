@@ -28,7 +28,12 @@ dependencies {
 
 tasks.named<Test>("test") { useJUnitPlatform() }
 
-spotless { kotlin { licenseHeader("// SPDX-License-Identifier: MIT-0") } }
+spotless {
+  kotlin {
+    licenseHeader("// SPDX-License-Identifier: MIT-0")
+    ktfmt().googleStyle()
+  }
+}
 
 publishing {
   publications {
