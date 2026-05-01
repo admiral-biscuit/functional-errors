@@ -71,17 +71,23 @@ infix fun Failure.shouldHaveThrowableCause(throwable: Throwable): Failure = appl
   should(haveThrowableCause(throwable))
 }
 
-/** Asserts that the direct cause is a [FailureCause] and returns it for further inspection. */
-fun Failure.shouldHaveFailureCause(): FailureCause {
+/**
+ * Asserts that the direct cause is a [FailureCause] and returns the wrapped [Failure] for further
+ * inspection.
+ */
+fun Failure.shouldHaveFailureCause(): Failure {
   val cause = this.cause
   if (cause !is FailureCause) error("Expected cause to be a FailureCause but was $cause")
-  return cause
+  return cause.failure
 }
 
-/** Asserts that the direct cause is a [ThrowableCause] and returns it for further inspection. */
-fun Failure.shouldHaveThrowableCause(): ThrowableCause {
+/**
+ * Asserts that the direct cause is a [ThrowableCause] and returns the wrapped [Throwable] for
+ * further inspection.
+ */
+fun Failure.shouldHaveThrowableCause(): Throwable {
   val cause = this.cause
   if (cause !is ThrowableCause) error("Expected cause to be a ThrowableCause but was $cause")
-  return cause
+  return cause.throwable
 }
 // endregion

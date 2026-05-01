@@ -73,7 +73,7 @@ class FailureMatchersTest :
     context("shouldHaveFailureCause()") {
       test("returns the FailureCause when present") {
         val failure = OtherFailure("top failure", FailureCause(cause))
-        failure.shouldHaveFailureCause() shouldBe FailureCause(cause)
+        failure.shouldHaveFailureCause() shouldBe cause
       }
 
       test("fails when cause is a ThrowableCause") {
@@ -89,7 +89,7 @@ class FailureMatchersTest :
     context("shouldHaveThrowableCause()") {
       test("returns the ThrowableCause when present") {
         val failure = SomeFailure("top failure", ThrowableCause(throwable))
-        failure.shouldHaveThrowableCause() shouldBe ThrowableCause(throwable)
+        failure.shouldHaveThrowableCause() shouldBe throwable
       }
 
       test("fails when cause is a FailureCause") {

@@ -132,7 +132,6 @@ failure shouldHaveFailureCause databaseFailure
 // extract the cause for further assertions
 failure
     .shouldHaveThrowableCause()
-    .throwable
     .message shouldBe "Connection reset"
 ```
 
