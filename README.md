@@ -3,6 +3,8 @@
 A small Kotlin library for typesafe, non-exceptional error handling built on top of
 [Arrow](https://arrow-kt.io)'s `Either`.
 
+Originally developed at [tech@spree](https://spree.de/).
+
 ## The problem
 
 Arrow's `Either` makes it possible to pass errors between service layers as typed values instead of
