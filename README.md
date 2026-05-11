@@ -147,10 +147,6 @@ failure shouldHaveFailureCause databaseFailure
 failure
     .shouldHaveThrowableCause()
     .message shouldBe "Connection reset"
-
-// inspect the instantiation site
-failure.createdAt?.fileName  // e.g. "UserService.kt"
-failure.createdAt?.lineNumber
 ```
 
 ## Requirements
