@@ -10,6 +10,7 @@ plugins {
   id("com.vanniktech.maven.publish") apply false
 }
 
+val arrowVersion by extra("2.0.0")
 val kotestVersion by extra("5.9.1")
 
 subprojects {
