@@ -10,7 +10,7 @@ import io.github.admiralbiscuit.functionalerrors.catchAndCauseFailure
 import io.github.admiralbiscuit.functionalerrors.causeFailure
 import io.github.admiralbiscuit.functionalerrors.examples.UserServiceFailure.Unexpected
 
-data class DataBaseFailure(override val message: String, override val cause: Cause? = null) :
+data class DatabaseFailure(override val message: String, override val cause: Cause? = null) :
   Failure(message, cause)
 
 sealed class UserServiceFailure(override val message: String, override val cause: Cause? = null) :
@@ -31,8 +31,8 @@ object UserRepository {
       else -> User(id)
     }
 
-  fun getUserByIdEither(id: Int): Either<DataBaseFailure, User?> =
-    catchAndCauseFailure("connection to database not possible", ::DataBaseFailure) {
+  fun getUserByIdEither(id: Int): Either<DatabaseFailure, User?> =
+    catchAndCauseFailure("connection to database not possible", ::DatabaseFailure) {
       getUserByIdThrowing(id)
     }
 }
