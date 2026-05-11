@@ -24,13 +24,12 @@ sealed class UserServiceFailure(override val message: String, override val cause
 data class User(val id: Int)
 
 object UserRepository {
-  fun getUserByIdThrowing(id: Int): User? {
-    return when (id) {
+  fun getUserByIdThrowing(id: Int): User? =
+    when (id) {
       13 -> error("connection to database not possible")
       37 -> null
       else -> User(id)
     }
-  }
 
   fun getUserByIdEither(id: Int): Either<DataBaseFailure, User?> =
     catchAndCauseFailure("connection to database not possible", ::DataBaseFailure) {
