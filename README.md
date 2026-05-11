@@ -21,7 +21,7 @@ This library provides the building blocks to do that cleanly.
 
 ```kotlin
 dependencies {
-    implementation("io.github.admiral-biscuit:functional-errors:0.1.1")
+    implementation("io.github.admiral-biscuit:functional-errors:0.2.0")
 }
 ```
 
@@ -29,7 +29,7 @@ For Kotest assertion support, also add the companion library to your test depend
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.admiral-biscuit:functional-errors-kotest:0.1.1")
+    testImplementation("io.github.admiral-biscuit:functional-errors-kotest:0.2.0")
 }
 ```
 
