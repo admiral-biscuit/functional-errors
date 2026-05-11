@@ -166,7 +166,15 @@ fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
  * Runs [f] and returns its result as [Either.Right]. If [f] throws, the [Throwable] is wrapped in a
  * new [F] built by [transformation] and returned as [Either.Left].
  */
-suspend fun <F : Failure, R> catchAndCauseFailure(
+fun <F : Failure, R> catchAndCauseFailure(
+  message: String,
+  transformation: (String, Cause) -> F,
+  f: () -> R,
+): Either<F, R> =
+  Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
+
+/** Suspending variant of [catchAndCauseFailure] for use with suspend functions. */
+suspend fun <F : Failure, R> suspendCatchAndCauseFailure(
   message: String,
   transformation: (String, Cause) -> F,
   f: suspend () -> R,

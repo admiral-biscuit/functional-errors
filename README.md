@@ -92,11 +92,11 @@ fun getUserProfile(id: UserId): Either<ServiceFailure, UserProfile> =
 
 ### Bridge exception-based code
 
-Use `catchAndCauseFailure` to catch any `Throwable` thrown by a block and convert it into a typed
+Use `catchAndCauseFailure` or `suspendCatchAndCauseFailure` to catch any `Throwable` thrown by a block and convert it into a typed
 failure:
 
 ```kotlin
-suspend fun findUser(id: UserId): Either<DatabaseFailure, User> =
+fun findUser(id: UserId): Either<DatabaseFailure, User> =
     catchAndCauseFailure("Database query failed", ::DatabaseFailure) {
         database.query("SELECT * FROM users WHERE id = ?", id)
     }

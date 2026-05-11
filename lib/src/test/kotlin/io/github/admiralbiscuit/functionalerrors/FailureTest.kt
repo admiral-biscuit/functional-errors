@@ -117,6 +117,23 @@ class FailureTest :
         failure.message shouldBe "Hi!"
         failure.cause.shouldBeInstanceOf<ThrowableCause>().throwable.message shouldBe "Oh no!"
       }
+
+      test("suspended non-throwing code returns right") {
+        val result =
+          suspendCatchAndCauseFailure(message = "Hi!", transformation = ::SomeFailure) { "o.k." }
+        result shouldBeRight "o.k."
+      }
+
+      test("suspended throwing code returns left failure") {
+        val failure =
+          suspendCatchAndCauseFailure(message = "Hi!", transformation = ::SomeFailure) {
+              throw Throwable("Oh no!")
+            }
+            .shouldBeLeft()
+
+        failure.message shouldBe "Hi!"
+        failure.cause.shouldBeInstanceOf<ThrowableCause>().throwable.message shouldBe "Oh no!"
+      }
     }
 
     test("toCause") {

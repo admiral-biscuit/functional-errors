@@ -32,14 +32,14 @@ object UserRepository {
     }
   }
 
-  suspend fun getUserByIdEither(id: Int): Either<DataBaseFailure, User?> =
+  fun getUserByIdEither(id: Int): Either<DataBaseFailure, User?> =
     catchAndCauseFailure("connection to database not possible", ::DataBaseFailure) {
       getUserByIdThrowing(id)
     }
 }
 
 object UserService {
-  suspend fun getUserById(id: Int): Either<UserServiceFailure, User> = either {
+  fun getUserById(id: Int): Either<UserServiceFailure, User> = either {
     val userOrNull =
       UserRepository.getUserByIdEither(id)
         .causeFailure("failed to get user from repository", ::Unexpected)
@@ -49,7 +49,7 @@ object UserService {
   }
 }
 
-suspend fun main() {
+fun main() {
   println("=== exception root cause ===")
   UserService.getUserById(13).onLeft { println(it.toPrettyString()) }
 
