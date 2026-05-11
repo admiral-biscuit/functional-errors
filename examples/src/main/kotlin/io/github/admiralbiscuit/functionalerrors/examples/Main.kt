@@ -49,9 +49,9 @@ object UserService {
 }
 
 fun main() {
-  println("=== exception root cause ===")
+  println("=== caused by Exception ===")
   UserService.getUserById(13).onLeft { println(it.toPrettyString()) }
 
-  println("=== non-exception root cause ===")
+  println("=== no cause ===")
   UserService.getUserById(37).onLeft { println(it.toPrettyString()) }
 }
