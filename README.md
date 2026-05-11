@@ -37,18 +37,18 @@ dependencies {
 
 ### Define your failures
 
-Implement `Failure` on each error type in your domain:
+Extend `Failure` for each error type in your domain:
 
 ```kotlin
 data class DatabaseFailure(
     override val message: String,
     override val cause: Cause? = null,
-) : Failure
+) : Failure(message, cause)
 
 data class ServiceFailure(
     override val message: String,
     override val cause: Cause? = null,
-) : Failure
+) : Failure(message, cause)
 ```
 
 ### Chain failures across layers
@@ -72,7 +72,7 @@ data class ServiceFailure(
     override val message: String,
     val operation: String,
     override val cause: Cause? = null,
-) : Failure
+) : Failure(message, cause)
 
 fun getUserProfile(id: UserId): Either<ServiceFailure, UserProfile> =
     findUser(id)
@@ -94,8 +94,9 @@ suspend fun findUser(id: UserId): Either<DatabaseFailure, User> =
 
 ### Inspect the causal chain
 
-`toPrettyString` renders the full chain of causes, similar to how an exception prints its stack
-trace:
+`toPrettyString` renders the full chain of causes, mirroring the format of a Java exception with
+its `Caused by:` chain. Each `Failure` entry includes a clickable link to the line where it was
+instantiated:
 
 ```kotlin
 val failure: ServiceFailure = TODO()
@@ -104,10 +105,11 @@ println(failure.toPrettyString())
 
 ```
 ServiceFailure: Could not load user profile
+	at com.example.UserService.getUserProfile(UserService.kt:22)
 Caused by: DatabaseFailure: Database query failed
+	at com.example.UserRepository.findUser(UserRepository.kt:17)
 Caused by: java.sql.SQLException: Connection reset
 	at com.example.Database.query(Database.kt:42)
-	at com.example.UserRepository.findUser(UserRepository.kt:17)
 	...
 ```
 
@@ -135,6 +137,10 @@ failure shouldHaveFailureCause databaseFailure
 failure
     .shouldHaveThrowableCause()
     .message shouldBe "Connection reset"
+
+// inspect the instantiation site
+failure.createdAt?.fileName  // e.g. "UserService.kt"
+failure.createdAt?.lineNumber
 ```
 
 ## Requirements

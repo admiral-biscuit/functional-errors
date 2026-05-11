@@ -10,10 +10,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 private data class SomeFailure(override val message: String, override val cause: Cause? = null) :
-  Failure
+  Failure(message, cause)
 
 private data class OtherFailure(override val message: String, override val cause: Cause? = null) :
-  Failure
+  Failure(message, cause)
 
 class FailureMatchersTest :
   FunSpec({

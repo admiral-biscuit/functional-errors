@@ -53,7 +53,7 @@ infix fun Failure.shouldHaveMessage(message: String): Failure = apply {
   should(haveMessage(message))
 }
 
-fun Failure.shouldNotHaveMessage(message: String): Failure = apply {
+infix fun Failure.shouldNotHaveMessage(message: String): Failure = apply {
   shouldNot(haveMessage(message))
 }
 

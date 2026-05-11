@@ -6,16 +6,29 @@ import arrow.core.Either
 // region Failure
 private const val MAX_CHAIN_LENGTH = 999
 
+private fun captureCreationSite(): StackTraceElement? =
+  Throwable().stackTrace.firstOrNull { frame ->
+    frame.methodName != "<init>" &&
+      frame.fileName != "Failure.kt" &&
+      !frame.className.startsWith("java.") &&
+      !frame.className.startsWith("kotlin.")
+  }
+
 /**
- * Interface for typesafe, non-exceptional errors intended to be used with Arrow's [Either].
+ * Base class for typesafe, non-exceptional errors intended to be used with Arrow's [Either].
  *
- * Implement this interface on each error type in your domain. A [Failure] carries a [message]
- * describing what went wrong and an optional [cause] linking it to the underlying [Failure] or
- * [Throwable] that triggered it, forming a causal chain analogous to an exception stack trace.
+ * Extend this class on each error type in your domain. A [Failure] carries a [message] describing
+ * what went wrong and an optional [cause] linking it to the underlying [Failure] or [Throwable]
+ * that triggered it, forming a causal chain analogous to an exception stack trace.
+ *
+ * The [createdAt] property captures the call site where the failure was instantiated, analogous to
+ * the top frame of an exception stack trace.
  */
-interface Failure {
-  val message: String
-  val cause: Cause?
+abstract class Failure(
+  open val message: String,
+  open val cause: Cause? = null,
+  val createdAt: StackTraceElement? = captureCreationSite(),
+) {
 
   /**
    * Returns all [Cause] entries in the causal chain, starting from [cause] and following each
@@ -53,8 +66,20 @@ interface Failure {
   fun rootCause(stopAtFirstThrowable: Boolean = true): Cause? =
     causalChain(stopAtFirstThrowable).lastOrNull()
 
-  /** Returns a single-line string of the form `ClassName: message`. */
-  fun toSimpleString(): String = "${javaClass.simpleName}: $message"
+  /**
+   * Returns a string representation of this [Failure], mirroring the format of a Java exception:
+   * ```
+   * ClassName: message
+   *     at ClassName.method(FileName.kt:line)
+   * ```
+   *
+   * The `at` line is omitted when [createdAt] is `null`. The location uses
+   * [StackTraceElement.toString], so IDEs render it as a clickable link.
+   */
+  fun toSimpleString(): String {
+    val location = createdAt?.let { "\n\tat $it" } ?: ""
+    return "${javaClass.simpleName}: $message$location"
+  }
 
   /**
    * Returns a multi-line string representation of this [Failure] and its full [causalChain].
