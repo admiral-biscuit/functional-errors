@@ -10,5 +10,5 @@ pluginManagement {
 rootProject.name = "Functional Errors"
 
 include("lib")
-
 include("lib-kotest")
+include("examples")

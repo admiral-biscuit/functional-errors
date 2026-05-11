@@ -33,6 +33,16 @@ dependencies {
 }
 ```
 
+## Example
+
+A self-contained, runnable example covering sealed failure hierarchies, `causeFailure`,
+`catchAndCauseFailure`, and Arrow's `either` DSL is in
+[`examples/src/main/kotlin/.../examples/Main.kt`](examples/src/main/kotlin/io/github/admiralbiscuit/functionalerrors/examples/Main.kt).
+
+```
+./gradlew :examples:run
+```
+
 ## Usage
 
 ### Define your failures

@@ -14,10 +14,7 @@ val kotestVersion by extra("5.9.1")
 
 subprojects {
   apply(plugin = "org.jetbrains.kotlin.jvm")
-  apply(plugin = "java-library")
   apply(plugin = "com.diffplug.spotless")
-  apply(plugin = "org.jetbrains.dokka")
-  apply(plugin = "com.vanniktech.maven.publish")
 
   group = "io.github.admiral-biscuit"
   version = "0.1.2"
@@ -25,7 +22,6 @@ subprojects {
   repositories { mavenCentral() }
 
   extensions.configure<JavaPluginExtension> {
-    withSourcesJar()
     toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
   }
 
@@ -37,6 +33,14 @@ subprojects {
       ktfmt().googleStyle()
     }
   }
+}
+
+configure(subprojects.filter { it.name != "examples" }) {
+  apply(plugin = "java-library")
+  apply(plugin = "org.jetbrains.dokka")
+  apply(plugin = "com.vanniktech.maven.publish")
+
+  extensions.configure<JavaPluginExtension> { withSourcesJar() }
 
   extensions.configure<MavenPublishBaseExtension> {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
@@ -60,8 +64,7 @@ subprojects {
       scm {
         url = "https://github.com/admiral-biscuit/functional-errors"
         connection = "scm:git:git://github.com/admiral-biscuit/functional-errors.git"
-        developerConnection =
-          "scm:git:ssh://github.com/admiral-biscuit/functional-errors.git"
+        developerConnection = "scm:git:ssh://github.com/admiral-biscuit/functional-errors.git"
       }
     }
   }
