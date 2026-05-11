@@ -3,7 +3,7 @@
 A small Kotlin library for typesafe, non-exceptional error handling built on top of
 [Arrow](https://arrow-kt.io)'s `Either`.
 
-Originally developed at [tech@spree](https://spree.de/).
+Originally developed at [tech@spree](https://spree.de/). See also my more detailed [ blog post](https://blog.spree.de/2026/05/11/failure-kt-a-tiny-stacktrace-library-on-top-of-arrows-either/).
 
 ## The problem
 
