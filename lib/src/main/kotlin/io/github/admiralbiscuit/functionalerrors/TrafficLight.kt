@@ -16,7 +16,6 @@ data class Yellow<out A, out W>(val value: A, val warnings: NonEmptyList<W>) :
 
 data class Red<out E, out W>(val value: E, val warnings: List<W> = emptyList()) :
   TrafficLight<Nothing, W, E> {
-
   override fun toString(): String = "TrafficLight.Red($value, $warnings)"
 }
 
