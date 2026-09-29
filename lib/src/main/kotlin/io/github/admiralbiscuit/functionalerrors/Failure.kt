@@ -21,6 +21,20 @@ private fun captureCreationSite(): StackTraceElement? =
  * what went wrong and an optional [cause] linking it to the underlying [Failure] or [Throwable]
  * that triggered it, forming a causal chain analogous to an exception stack trace.
  *
+ * Subclasses can narrow the type of [cause] by overriding it covariantly, so that the wrapped
+ * [Failure] keeps its concrete type:
+ * ```
+ * abstract class AppFailure(
+ *   override val message: String,
+ *   override val cause: Cause<AppFailure>? = null,
+ * ) : Failure(message, cause) {
+ *   abstract val code: Int
+ * }
+ * ```
+ *
+ * A narrowed [cause] still accepts a [ThrowableCause], and can be narrowed further in subclasses
+ * but never widened again.
+ *
  * The [createdAt] property captures the call site where the failure was instantiated, analogous to
  * the top frame of an exception stack trace.
  */
@@ -78,6 +92,9 @@ abstract class Failure(
    *
    * The `at` line is omitted when [createdAt] is `null`. The location uses
    * [StackTraceElement.toString], so IDEs render it as a clickable link.
+   *
+   * Override this function to customize how a [Failure] subclass is rendered. [toPrettyString] uses
+   * it by default for every [Failure] in the causal chain.
    */
   open fun toSimpleString(): String {
     val location = createdAt?.let { "\n\tat $it" } ?: ""
@@ -91,6 +108,10 @@ abstract class Failure(
    * [Throwable.stackTraceToString] for [ThrowableCause] entries, joined by `"\nCaused by: "`. All
    * three formatting steps can be overridden via [failureToString], [throwableToString], and
    * [joinStrings].
+   *
+   * To change how a [Failure] subclass is always rendered, override [toSimpleString] instead. For a
+   * one-off format, pass a [failureToString] that checks the concrete type. Since the causal chain
+   * can mix different [Failure] types, [failureToString] always receives a plain [Failure].
    */
   fun toPrettyString(
     failureToString: (Failure) -> String = { failure -> failure.toSimpleString() },
@@ -117,6 +138,13 @@ abstract class Failure(
 // region Cause
 /** The cause of a [Failure]: either another [Failure] or a [Throwable]. */
 sealed interface Cause<out F : Failure>
+
+// Remark:
+// This is deliberately not a value class.
+// With a generic value class,
+// the Kotlin compiler can access a property of the unboxed failure on the erased type Failure
+// without a cast,
+// which fails at runtime with a NoSuchFieldError.
 
 /** Wraps a [Failure] as the cause of another [Failure]. */
 data class FailureCause<out F : Failure>(val failure: F) : Cause<F>

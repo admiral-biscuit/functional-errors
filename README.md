@@ -52,7 +52,7 @@ Extend `Failure` for each error type. Simple failures are data classes:
 ```kotlin
   data class DatabaseFailure(
     override val message: String,
-    override val cause: Cause? = null,
+    override val cause: Cause<*>? = null,
   ) : Failure(message, cause)
 ```
 
@@ -63,14 +63,51 @@ preserving its context:
 ```kotlin
   sealed class UserServiceFailure(
     override val message: String,
-    override val cause: Cause? = null,
+    override val cause: Cause<*>? = null,
   ) : Failure(message, cause) {
-    data class Unexpected(override val message: String, override val cause: Cause) :
-      UserServiceFailure(message, cause)
+    data class Unexpected(
+      override val message: String,
+      override val cause: Cause<DatabaseFailure>,
+    ) : UserServiceFailure(message, cause)
 
     data class UserNotFound(val id: Int) : UserServiceFailure("User $id not found")
   }
 ```
+
+### Narrow the cause type
+
+A `Cause<F>` is either a `FailureCause<F>` wrapping another failure of type `F`, or a
+`ThrowableCause` wrapping an exception. `Cause<*>` accepts any failure, but a subclass can narrow
+its `cause` by overriding it, as `Unexpected` does above with `Cause<DatabaseFailure>`.
+
+The most common use is a base class for all failures of your application. Narrow `cause` there,
+and every failure in a chain is known to be an `AppFailure`, so you can use its properties, such
+as `code`, all the way down:
+
+```kotlin
+  abstract class AppFailure(
+    override val message: String,
+    override val cause: Cause<AppFailure>? = null,
+  ) : Failure(message, cause) {
+    abstract val code: Int
+  }
+
+  data class DatabaseFailure(
+    override val message: String,
+    override val cause: Cause<AppFailure>? = null,
+  ) : AppFailure(message, cause) {
+    override val code = 500
+  }
+
+  data class UserNotFound(val id: Int) : AppFailure("User $id not found") {
+    override val code = 404
+  }
+```
+
+A narrowed `cause` still accepts a `ThrowableCause`, so `::DatabaseFailure` works with
+`catchAndCauseFailure` as before. Subclasses can narrow `cause` further, but never widen it again:
+narrow in a base class when your whole hierarchy shares a cause type, and in leaf classes like
+`Unexpected` otherwise.
 
 ### Bridge exception-based code
 
@@ -88,7 +125,9 @@ Use `suspendCatchAndCauseFailure` for blocks that call suspend functions.
 ### Chain failures across layers
 
 Use `causeFailure` to wrap an `Either` from a lower layer, preserving the original failure as the
-cause. Combined with Arrow's `either` DSL:
+cause. Constructor references work as long as their `cause` parameter accepts the lower layer's
+failure type — `::Unexpected` takes a `Cause<DatabaseFailure>`, which matches
+`Either<DatabaseFailure, _>`. Combined with Arrow's `either` DSL:
 
 ```kotlin
   fun getUserById(id: Int): Either<UserServiceFailure, User> = either {
@@ -121,8 +160,35 @@ instantiated:
     ...
 ```
 
+To change how a failure type is rendered, override `toSimpleString()`. `toPrettyString()` uses it for
+every failure in the chain, including causes. For example, to add the `code` to every `AppFailure`
+from [Narrow the cause type](#narrow-the-cause-type):
+
+```kotlin
+  abstract class AppFailure(
+    override val message: String,
+    override val cause: Cause<AppFailure>? = null,
+  ) : Failure(message, cause) {
+    abstract val code: Int
+
+    override fun toSimpleString() = "${javaClass.simpleName} (Code $code): $message"
+  }
+```
+
+```
+  DatabaseFailure (Code 500): connection to database not possible
+```
+
+For a one-off format, pass lambdas to `toPrettyString` instead — `failureToString`,
+`throwableToString`, and `joinStrings` control how each entry is rendered and how they are joined.
+
 For programmatic inspection, `causalChain()` returns the list of `Cause` entries and `rootCause()`
-returns the last one.
+returns the last one. For example, to find all failures of a given type in the chain:
+
+```kotlin
+  val databaseFailures: List<DatabaseFailure> =
+    failure.causalChain().mapNotNull { cause -> (cause as? FailureCause<*>)?.failure as? DatabaseFailure }
+```
 
 ## Testing
 

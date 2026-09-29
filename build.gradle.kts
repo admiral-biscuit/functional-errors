@@ -18,7 +18,7 @@ subprojects {
   apply(plugin = "com.diffplug.spotless")
 
   group = "io.github.admiral-biscuit"
-  version = "0.2.0"
+  version = "0.3.0"
 
   repositories { mavenCentral() }
 
