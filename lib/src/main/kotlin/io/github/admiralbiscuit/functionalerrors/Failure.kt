@@ -26,7 +26,7 @@ private fun captureCreationSite(): StackTraceElement? =
  */
 abstract class Failure(
   open val message: String,
-  open val cause: Cause? = null,
+  open val cause: Cause<*>? = null,
   val createdAt: StackTraceElement? = captureCreationSite(),
 ) {
 
@@ -40,10 +40,13 @@ abstract class Failure(
    *
    * The [max] parameter guards against infinite loops in case of a self-referencing [Failure].
    */
-  fun causalChain(stopAtFirstThrowable: Boolean = true, max: Int = MAX_CHAIN_LENGTH): List<Cause> =
+  fun causalChain(
+    stopAtFirstThrowable: Boolean = true,
+    max: Int = MAX_CHAIN_LENGTH,
+  ): List<Cause<*>> =
     generateSequence(this.cause) { cause ->
         when (cause) {
-          is FailureCause -> cause.failure.cause
+          is FailureCause<*> -> cause.failure.cause
           is ThrowableCause ->
             if (stopAtFirstThrowable) {
               null
@@ -63,7 +66,7 @@ abstract class Failure(
    * - `false`: the root [ThrowableCause] at the end of the [Throwable]'s own cause chain is
    *   returned.
    */
-  fun rootCause(stopAtFirstThrowable: Boolean = true): Cause? =
+  fun rootCause(stopAtFirstThrowable: Boolean = true): Cause<*>? =
     causalChain(stopAtFirstThrowable).lastOrNull()
 
   /**
@@ -76,7 +79,7 @@ abstract class Failure(
    * The `at` line is omitted when [createdAt] is `null`. The location uses
    * [StackTraceElement.toString], so IDEs render it as a clickable link.
    */
-  fun toSimpleString(): String {
+  open fun toSimpleString(): String {
     val location = createdAt?.let { "\n\tat $it" } ?: ""
     return "${javaClass.simpleName}: $message$location"
   }
@@ -100,7 +103,7 @@ abstract class Failure(
       listOf(failureToString(this)) +
         causalChain(stopAtFirstThrowable, max).map { cause ->
           when (cause) {
-            is FailureCause -> failureToString(cause.failure)
+            is FailureCause<*> -> failureToString(cause.failure)
             is ThrowableCause -> throwableToString(cause.throwable)
           }
         }
@@ -113,19 +116,19 @@ abstract class Failure(
 
 // region Cause
 /** The cause of a [Failure]: either another [Failure] or a [Throwable]. */
-sealed interface Cause
+sealed interface Cause<out F : Failure>
 
 /** Wraps a [Failure] as the cause of another [Failure]. */
-@JvmInline value class FailureCause(val failure: Failure) : Cause
+data class FailureCause<out F : Failure>(val failure: F) : Cause<F>
 
 /** Wraps a [Throwable] as the cause of a [Failure], bridging exception-based code. */
-@JvmInline value class ThrowableCause(val throwable: Throwable) : Cause
+@JvmInline value class ThrowableCause(val throwable: Throwable) : Cause<Nothing>
 
 // endregion
 
 // region extension functions
 /** Wraps this [Failure] as a [FailureCause]. Useful when constructing a new [Failure] manually. */
-fun Failure.toCause(): FailureCause = FailureCause(this)
+fun <F : Failure> F.toCause(): FailureCause<F> = FailureCause(this)
 
 /**
  * Wraps this [Throwable] as a [ThrowableCause]. Useful when constructing a new [Failure] manually.
@@ -139,7 +142,7 @@ fun Throwable.toCause(): ThrowableCause = ThrowableCause(this)
  */
 fun <F1 : Failure, F2 : Failure> F1.causeFailure(
   message: String,
-  transformation: (String, Cause) -> F2,
+  transformation: (String, Cause<F1>) -> F2,
 ): F2 = transformation(message, FailureCause(this))
 
 /**
@@ -148,8 +151,10 @@ fun <F1 : Failure, F2 : Failure> F1.causeFailure(
  * Constructor references work for simple failures: `throwable.causeFailure("message",
  * ::MyFailure)`.
  */
-fun <F : Failure> Throwable.causeFailure(message: String, transformation: (String, Cause) -> F): F =
-  transformation(message, ThrowableCause(this))
+fun <F : Failure> Throwable.causeFailure(
+  message: String,
+  transformation: (String, Cause<Nothing>) -> F,
+): F = transformation(message, ThrowableCause(this))
 
 /**
  * Maps the [Either.Left] to a new [F2] caused by the original failure. [Either.Right] values pass
@@ -159,7 +164,7 @@ fun <F : Failure> Throwable.causeFailure(message: String, transformation: (Strin
  */
 fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
   message: String,
-  transformation: (String, Cause) -> F2,
+  transformation: (String, Cause<F1>) -> F2,
 ): Either<F2, R> = mapLeft { failure -> failure.causeFailure(message, transformation) }
 
 /**
@@ -168,7 +173,7 @@ fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
  */
 fun <F : Failure, R> catchAndCauseFailure(
   message: String,
-  transformation: (String, Cause) -> F,
+  transformation: (String, Cause<Nothing>) -> F,
   f: () -> R,
 ): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
@@ -176,8 +181,9 @@ fun <F : Failure, R> catchAndCauseFailure(
 /** Suspending variant of [catchAndCauseFailure] for use with suspend functions. */
 suspend fun <F : Failure, R> suspendCatchAndCauseFailure(
   message: String,
-  transformation: (String, Cause) -> F,
+  transformation: (String, Cause<Nothing>) -> F,
   f: suspend () -> R,
 ): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
+
 // endregion

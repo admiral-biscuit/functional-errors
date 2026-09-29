@@ -10,11 +10,13 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 
-private data class SomeFailure(override val message: String, override val cause: Cause? = null) :
+private data class SomeFailure(override val message: String, override val cause: Cause<*>? = null) :
   Failure(message, cause)
 
-private data class OtherFailure(override val message: String, override val cause: Cause? = null) :
-  Failure(message, cause)
+private data class OtherFailure(
+  override val message: String,
+  override val cause: Cause<*>? = null,
+) : Failure(message, cause)
 
 class FailureTest :
   FunSpec({

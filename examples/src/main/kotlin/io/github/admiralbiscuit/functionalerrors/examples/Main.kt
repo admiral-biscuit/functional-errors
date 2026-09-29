@@ -10,12 +10,14 @@ import io.github.admiralbiscuit.functionalerrors.catchAndCauseFailure
 import io.github.admiralbiscuit.functionalerrors.causeFailure
 import io.github.admiralbiscuit.functionalerrors.examples.UserServiceFailure.Unexpected
 
-data class DatabaseFailure(override val message: String, override val cause: Cause? = null) :
+data class DatabaseFailure(override val message: String, override val cause: Cause<*>? = null) :
   Failure(message, cause)
 
-sealed class UserServiceFailure(override val message: String, override val cause: Cause? = null) :
-  Failure(message, cause) {
-  data class Unexpected(override val message: String, override val cause: Cause) :
+sealed class UserServiceFailure(
+  override val message: String,
+  override val cause: Cause<*>? = null,
+) : Failure(message, cause) {
+  data class Unexpected(override val message: String, override val cause: Cause<DatabaseFailure>) :
     UserServiceFailure(message, cause)
 
   data class UserNotFound(val id: Int) : UserServiceFailure("User $id not found")
