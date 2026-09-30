@@ -76,15 +76,21 @@ class FailureMatchersTest :
       test("returns the FailureCause when present") {
         val failure = OtherFailure("top failure", FailureCause(cause))
         failure.shouldHaveFailureCause() shouldBe cause
+        failure.shouldHaveFailureCauseOfType<SomeFailure>() shouldBe cause
+      }
+
+      test("fails when cause is a FailureCause of wrong type") {
+        val failure = OtherFailure("top failure", FailureCause(cause))
+        shouldThrow<AssertionError> { failure.shouldHaveFailureCauseOfType<OtherFailure>() }
       }
 
       test("fails when cause is a ThrowableCause") {
         val failure = SomeFailure("top failure", ThrowableCause(throwable))
-        shouldThrow<IllegalStateException> { failure.shouldHaveFailureCause() }
+        shouldThrow<AssertionError> { failure.shouldHaveFailureCause() }
       }
 
       test("fails when cause is null") {
-        shouldThrow<IllegalStateException> { SomeFailure("no cause").shouldHaveFailureCause() }
+        shouldThrow<AssertionError> { SomeFailure("no cause").shouldHaveFailureCause() }
       }
     }
 
@@ -96,11 +102,11 @@ class FailureMatchersTest :
 
       test("fails when cause is a FailureCause") {
         val failure = OtherFailure("top failure", FailureCause(cause))
-        shouldThrow<IllegalStateException> { failure.shouldHaveThrowableCause() }
+        shouldThrow<AssertionError> { failure.shouldHaveThrowableCause() }
       }
 
       test("fails when cause is null") {
-        shouldThrow<IllegalStateException> { SomeFailure("no cause").shouldHaveThrowableCause() }
+        shouldThrow<AssertionError> { SomeFailure("no cause").shouldHaveThrowableCause() }
       }
     }
   })

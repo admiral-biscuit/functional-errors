@@ -8,6 +8,7 @@ import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
+import io.kotest.matchers.types.shouldBeInstanceOf
 
 // region Matcher
 private fun haveMessage(message: String) =
@@ -49,25 +50,25 @@ private fun haveThrowableCause(throwable: Throwable) =
 // endregion
 
 // region assertions
-infix fun Failure.shouldHaveMessage(message: String): Failure = apply {
+infix fun <F : Failure> F.shouldHaveMessage(message: String): F = apply {
   should(haveMessage(message))
 }
 
-infix fun Failure.shouldNotHaveMessage(message: String): Failure = apply {
+infix fun <F : Failure> F.shouldNotHaveMessage(message: String): F = apply {
   shouldNot(haveMessage(message))
 }
 
-infix fun Failure.shouldHaveMessageContaining(substring: String): Failure = apply {
+infix fun <F : Failure> F.shouldHaveMessageContaining(substring: String): F = apply {
   should(haveMessageContaining(substring))
 }
 
 /** Asserts that the direct cause is a [FailureCause] wrapping [failure]. */
-infix fun Failure.shouldHaveFailureCause(failure: Failure): Failure = apply {
+infix fun <F : Failure> F.shouldHaveFailureCause(failure: Failure): F = apply {
   should(haveFailureCause(failure))
 }
 
 /** Asserts that the direct cause is a [ThrowableCause] wrapping [throwable]. */
-infix fun Failure.shouldHaveThrowableCause(throwable: Throwable): Failure = apply {
+infix fun <F : Failure> F.shouldHaveThrowableCause(throwable: Throwable): F = apply {
   should(haveThrowableCause(throwable))
 }
 
@@ -75,19 +76,19 @@ infix fun Failure.shouldHaveThrowableCause(throwable: Throwable): Failure = appl
  * Asserts that the direct cause is a [FailureCause] and returns the wrapped [Failure] for further
  * inspection.
  */
-fun Failure.shouldHaveFailureCause(): Failure {
-  val cause = this.cause
-  if (cause !is FailureCause) error("Expected cause to be a FailureCause but was $cause")
-  return cause.failure
-}
+fun Failure.shouldHaveFailureCause(): Failure = cause.shouldBeInstanceOf<FailureCause<*>>().failure
+
+/**
+ * Asserts that the direct cause is a [FailureCause] wrapping an [F] and returns the wrapped [F] for
+ * further inspection.
+ */
+inline fun <reified F : Failure> Failure.shouldHaveFailureCauseOfType(): F =
+  shouldHaveFailureCause().shouldBeInstanceOf<F>()
 
 /**
  * Asserts that the direct cause is a [ThrowableCause] and returns the wrapped [Throwable] for
  * further inspection.
  */
-fun Failure.shouldHaveThrowableCause(): Throwable {
-  val cause = this.cause
-  if (cause !is ThrowableCause) error("Expected cause to be a ThrowableCause but was $cause")
-  return cause.throwable
-}
+fun Failure.shouldHaveThrowableCause(): Throwable =
+  cause.shouldBeInstanceOf<ThrowableCause>().throwable
 // endregion
