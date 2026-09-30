@@ -170,7 +170,7 @@ fun Throwable.toCause(): ThrowableCause = ThrowableCause(this)
  */
 fun <F1 : Failure, F2 : Failure> F1.causeFailure(
   message: String,
-  transformation: (String, Cause<F1>) -> F2,
+  transformation: (String, FailureCause<F1>) -> F2,
 ): F2 = transformation(message, FailureCause(this))
 
 /**
@@ -181,7 +181,7 @@ fun <F1 : Failure, F2 : Failure> F1.causeFailure(
  */
 fun <F : Failure> Throwable.causeFailure(
   message: String,
-  transformation: (String, Cause<Nothing>) -> F,
+  transformation: (String, ThrowableCause) -> F,
 ): F = transformation(message, ThrowableCause(this))
 
 /**
@@ -192,7 +192,7 @@ fun <F : Failure> Throwable.causeFailure(
  */
 fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
   message: String,
-  transformation: (String, Cause<F1>) -> F2,
+  transformation: (String, FailureCause<F1>) -> F2,
 ): Either<F2, R> = mapLeft { failure -> failure.causeFailure(message, transformation) }
 
 /**
@@ -201,7 +201,7 @@ fun <F1 : Failure, F2 : Failure, R> Either<F1, R>.causeFailure(
  */
 fun <F : Failure, R> catchAndCauseFailure(
   message: String,
-  transformation: (String, Cause<Nothing>) -> F,
+  transformation: (String, ThrowableCause) -> F,
   f: () -> R,
 ): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
@@ -209,7 +209,7 @@ fun <F : Failure, R> catchAndCauseFailure(
 /** Suspending variant of [catchAndCauseFailure] for use with suspend functions. */
 suspend fun <F : Failure, R> suspendCatchAndCauseFailure(
   message: String,
-  transformation: (String, Cause<Nothing>) -> F,
+  transformation: (String, ThrowableCause) -> F,
   f: suspend () -> R,
 ): Either<F, R> =
   Either.catch { f() }.mapLeft { throwable -> throwable.causeFailure(message, transformation) }
